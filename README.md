@@ -425,9 +425,9 @@ So I use @media queries to enforce to use _**px**_ unit and _**pt**_ unit instea
 ```
 
 The following _**css**_ classes is for _**popupoverlay**_ and it responsible to show and hide the popup.
-`position : fixed`{:.language-css} is to position the element relative to viewport.
-`left : 100vw`{:.language-css} is to hide popup overlay on the right. The _**css**_ rule transition makes
-overlay to appear with sliding animation 0.5s. `.popupoverlay[fa-show]`{:.language-css} rule is to 
+`position : fixed`{.language-css} is to position the element relative to viewport.
+`left : 100vw`{.language-css} is to hide popup overlay on the right. The _**css**_ rule transition makes
+overlay to appear with sliding animation 0.5s. `.popupoverlay[fa-show]`{.language-css} rule is to 
 show popup when _**fa-show**_ attribute is set.
 
 ```CSS
