@@ -1,1036 +1,728 @@
-# ASP.NET Core-2.1 : Customize Login Form
-This project demonstrate how to extend IdentityUser class and IdentityRole class to add customize field and role. It also shows how to customize Log-in form and Register form Layout using scaffolding. The sample of implementing multiple step registration form will also show in this project.
+# Creating Stylish Javascript Popup
+This project is to demonstrate how to crate stylish popup using Javscript, jQuery and React libraries. 
+I will designed a popup that guarantee to compatible across any type and size of devices with modern browsers. 
+You will see extensive features of CSS3 and power of jQuery selectors in this project. 
+This project will also make use of custom HTML attribute to make the script more elegant and simpler.
 
 #### Output of the Project
 
-##### Login Page
+The primary screen of project.
 
-![Out Login](images/out_login.png)
+![Out Primaryscreen](images/out_primaryscreen.png)
 
-##### Register Page
+The stylish popup.
 
-![Out Register](images/out_register.png)
+![Out Popupscreen](images/out_popupscreen.png)
 
-#### Creating New project
-In Visual studio 2017, create new ASP.NET 2.1 Core solution and select "Web Application (Model-View-Controller)" project with "Individual User Accounts" authentication.
+#### Creating the Html File
 
-![Dg Project](images/dg_project.png)
+Create the _**index.html**_ file in the root folder and add two &lt;div&gt; containers 
+named _**_maincontainer**_ and _**_popupcontainer**_ . At the head section it will require to include 
+jQuery, React and our own script files and css files. That's all for Html file and the rest will handle 
+by javascript and css.
 
-The new solution will created with following folders and files.
-
-![Wd Solution](images/wd_solution.png)
-
-#### Extend IdentityUser Class and IdentityRole Class
-
-Create ApplicationUser.cs file in Models Folder and create ApplicationUser class with additional field that we require.
-
-```C#
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace IdentityExtension.Models
-{
-    public class ApplicationUser : IdentityUser
-    {
-        public ApplicationUser() : base() { }
-
-        public string   FirstName     { get; set; }
-        public string   LastName      { get; set; }
-        public string   Gender        { get; set; }
-        public DateTime DateOfBirth   { get; set; }        
-        public string   MobileContact { get; set; }
-        public string   HomeContact   { get; set; }
-        public string   StreetAddress { get; set; }        
-        public string   City          { get; set; }
-        public string   PostalCode    { get; set; }
-        public string   Province      { get; set; }
-        public string   Country       { get; set; }
-    }
-}
-```
-
-Create ApplicationRole.cs file in Models Folder and create ApplicationRole class with additional properties, description and creationdate fields, and constructor to assign those properties.
-
-```C#
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace IdentityExtension.Models
-{
-	public class ApplicationRole : IdentityRole
-	{
-		public string Description       { get; set; }
-		public DateTime CreationDate    { get; set; }
-
-		public ApplicationRole() : base() { }
-
-		public ApplicationRole(string roleName) : base(roleName) { }
-
-		public ApplicationRole(string roleName, string description, DateTime creationDate) : base(roleName)
-		{
-			this.Description    = description;
-			this.CreationDate   = creationDate;
-		}          
-	}
-}
-```
-
-#### Amend ApplicationDBContext Class
-
-Amend the ApplicationDBContext class from Data\ApplicationDbContext.cs to inherit the ApplicationUser and ApplicationRole Classes.
-
-```C#
-using System;
-using System.Collections.Generic;
-using System.Text;
-using IdentityExtension.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-
-namespace IdentityExtension.Data
-{
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
-    {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
-    }
-}
-```
-
-#### Create class for seeding user list
-
-Create TestData.cs in DataFolder for seeding user records for testing. Create TestData class that implements asynchronous function clalled InitializeDB that insert role and user records intoto the database.
-
-```C#
-using IdentityExtension.Models;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace IdentityExtension.Data
-{
-    public class TestData
-    {
-        public static async Task InitializeDB(ApplicationDbContext context,
-                                              UserManager<ApplicationUser> userManager,
-                                              RoleManager<ApplicationRole> roleManager)
-        {
-            context.Database.EnsureCreated();
-
-
-            string adminRole = "Admin";
-            string adminDescription = "Administrator Role";
-
-            string memberRole = "Member";
-            string memberDescription = "Member Description";
-
-            string password = "P@ssw0rd";
-
-            if (await roleManager.FindByNameAsync(adminRole) == null)
-            {
-                await roleManager.CreateAsync(new ApplicationRole(adminRole, adminDescription, DateTime.Now));
-            }
-
-            if (await roleManager.FindByNameAsync(memberRole) == null)
-            {
-                await roleManager.CreateAsync(new ApplicationRole(memberRole, memberDescription, DateTime.Now));
-            }
-
-            if (await userManager.FindByNameAsync("john@user.com") == null)
-            {
-                var user = new ApplicationUser
-                {
-                    UserName = "john@user.com",
-                    Email = "john@user.com",
-                    FirstName = "John",
-                    LastName = "Smith",
-                    DateOfBirth = new DateTime(1980, 11, 5),
-                    Gender = "Male",
-                    MobileContact = "+12 5555-5555",
-                    HomeContact = "+23 5555-6666",
-                    StreetAddress = "#08-2048, Blk 64, Yishun Avenue 6",
-                    City = "Singapore",
-                    PostalCode = "760064",
-                    Province = "-",
-                    Country = "Singapore",
-                };
-
-                var result = await userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    await userManager.AddPasswordAsync(user, password);
-                    await userManager.AddToRoleAsync(user, adminRole);
-                };
-            }
-
-            if (await userManager.FindByNameAsync("william@user.com") == null)
-            {
-
-                var user = new ApplicationUser
-                {
-                    UserName = "william@user.com",
-                    Email = "william@user.com",
-                    FirstName = "William",
-                    LastName = "Brown",
-                    DateOfBirth = new DateTime(1982, 3, 12),
-                    Gender = "Male",
-                    MobileContact = "+12 3333-5555",
-                    HomeContact = "+23 3333-6666",
-                    StreetAddress = "#02-1024, Blk 512, Woodlands Avenue 2",
-                    City = "Singapore",
-                    PostalCode = "700512",
-                    Province = "-",
-                    Country = "Singapore",
-                };
-
-                var result = await userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    await userManager.AddPasswordAsync(user, password);
-                    await userManager.AddToRoleAsync(user, memberRole);
-                }
-            }
-
-            if (await userManager.FindByNameAsync("david@user.com") == null)
-            {
-
-                var user = new ApplicationUser
-                {
-                    UserName = "david@user.com",
-                    Email = "david@user.com",
-                    FirstName = "David",
-                    LastName = "Lim",
-                    DateOfBirth = new DateTime(1975, 2, 21),
-                    Gender = "Male",
-                    MobileContact = "+12 3333-1111",
-                    HomeContact = "+23 3333-1111",
-                    StreetAddress = "#04-4096, Blk 128, Bedok North Avenue 2",
-                    City = "Singapore",
-                    PostalCode = "700128",
-                    Province = "-",
-                    Country = "Singapore",
-                };
-
-                var result = await userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    await userManager.AddPasswordAsync(user, password);
-                    await userManager.AddToRoleAsync(user, memberRole);
-                }
-            }
-
-            if (await userManager.FindByNameAsync("taylor@user.com") == null)
-            {
-
-                var user = new ApplicationUser
-                {
-                    UserName = "taylor@user.com",
-                    Email = "taylor@user.com",
-                    FirstName = "Taylor",
-                    LastName = "Koh",
-                    DateOfBirth = new DateTime(1985, 5, 8),
-                    Gender = "Female",
-                    MobileContact = "+12 2222-5555",
-                    HomeContact = "+23 2222-6666",
-                    StreetAddress = "#02-128, Blk 256, Angmokio Avenue 2",
-                    City = "Singapore",
-                    PostalCode = "700512",
-                    Province = "-",
-                    Country = "Singapore",
-                };
-
-                var result = await userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    await userManager.AddPasswordAsync(user, password);
-                    await userManager.AddToRoleAsync(user, memberRole);
-                }
-            }
-
-            if (await userManager.FindByNameAsync("brain@user.com") == null)
-            {
-
-                var user = new ApplicationUser
-                {
-                    UserName = "brain@user.com",
-                    Email = "brain@user.com",
-                    FirstName = "Brain",
-                    LastName = "Foo",
-                    DateOfBirth = new DateTime(1982, 3, 12),
-                    Gender = "Male",
-                    MobileContact = "+12 3333-8888",
-                    HomeContact = "+23 3333-8888",
-                    StreetAddress = "#02-1024, Blk 125, Bedok South Avenue 6",
-                    City = "Singapore",
-                    PostalCode = "700125",
-                    Province = "-",
-                    Country = "Singapore",
-                };
-
-                var result = await userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    await userManager.AddPasswordAsync(user, password);
-                    await userManager.AddToRoleAsync(user, memberRole);
-                }
-            }
-        }
-    }
-}
-```
-
-#### Amend StartUp.cs and _LoginPartial.cshtml Files
-
-In StratUp.cs file, remove the following line which use Default IdentityUser class with our new code that create Identity using ApplicationUser and ApplicationRole classes.
-
-###### (Remove)
-```C#	
-	services.AddDefaultIdentity<IdentityUser>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-```
-
-###### (Add)
-```C#
-	services.AddIdentity<ApplicationUser, ApplicationRole>(
-                options => options.Stores.MaxLengthForKeys = 128)
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultUI()
-                .AddDefaultTokenProviders();
-
-```
-
-Add additional parameter to Configure function of Startup class in Startup.cs file.
-
-###### (Existing)
-```C#
-public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-```
-
-###### (Amended)
-```C#
-public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context,
-			RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
-```
-
-Add the end of the Conigure function, add a function call to TestData.InitializeDB(). As InitializeDB() is async function, we need to use Wait() to wait until task is completed.
-```C#
-public void Configure(IApplicationBuilder app, IHostingEnvironment env, ApplicationDbContext context,
-			RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
-{
-	....
-
-	TestData.InitializeDB(context, userManager, roleManager).Wait();
-}
-```
-
-
-In Views\Shared\_LoginPartial.cshtml file, amend dependcy injection of SingInManager and UserManager to use ApplicationUser model instead of IdentityUser.
-
-###### (Existing)
-```C#
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
-```
-
-###### (Amended)
-```C#
-@inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
-```
-
-#### Adding Migration and Updating Database
-
-##### Command Prompt Method
-##### <u>*Adding Migration*</u>
-
-**C:\XXXX\XXXXX>** *dotnet ef migrations add ExtendItentity*
-
-![Cmd Addmigration](images/cmd_addmigration.png)
-
-##### <u>*Update Database*</u>
-
-**C:\XXXX\XXXXX>** *dotnet ef database update*
-
-![Cmd Updatedatabase](images/cmd_updatedatabase.png)
-
-Update Database
-
-##### Package Manager Console Method
-##### <u>*Adding Migration*</u>
-
-**PM >** *add-migration ExtendIdentity*
-
-![Pkm Addmigration](images/pkm_addmigration.png)
-
-##### <u>*Update Database*</u>
-**PM >** *update-database*
-
-![Pkm Updatedatabase](images/pkm_updatedatabase.png)'
-
-*__ExtendIdentity__ is the name of migration and you can give any name.*
-
-After this stage, database is already updated the columns that match with properties we added in ApplicationUser and ApplicationRole classes.
-
-
-#### Scaffolding Identity UI
-
-As Identity UI is embedded in the framework, we need to scaffold the Identity UI to customize it. To scaffold the Identity, right click on the project and select _**Add > New Scaffold**_ Item.
-
-![Mnu Scaffold](images/mnu_scaffold.png)
-
-Select the item named Identity from  "Add Scaffold" Dialog Box.
-
-![Dg Scaffold](images/dg_scaffold.png)
-
-At "Add Identity" dialog box, tick the _**Override all files**_ and Data context class combobox should select our ApplicationDBContext called _**ApplicationDBContect(IdentityExtension.Data)**_.
-
-![Dg Addidentity](images/dg_addidentity.png)
-
-After scaffolding, you will see a bunch of Identity UI related files are added to the solution under _**wwwroot\area\identity**_ folder.
-
-![Wd Scaffolded](images/wd_scaffolded.png)
-
-
-#### Preparation of _Layout.cshtml for Customizing
-##### Modifying _Layout.cshtml 
-To be easier to manage, we will remove the navigation bar from _Layout.cshtml and create new partial view for navigation bar.
-
-Open file _**Views\Shared\_Layout.cshtml**_, cut the *&lt;nav&gt;* tag and replace with partial tag _**&lt;partial nameNavbar" /&gt;**_
-
-```HTML
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        ...
-    </nav>
-```
-At the end of the *&lt;head&gt;* tag in _Layout.cshtml file, add *page_css* section renderer to allow rendering of page specific css files.
-
-At the end of the *&lt;body&gt;* tag in _Layout.cshtml file, add *page_script* section renderer to allow rendering of page specific script files.
-
-For both section renderer, required parameter is false as this section is not mandatory and it will render if only render for the page those has special behaviour.
-```HTML
+```JAVASCRIPT
 <!DOCTYPE html>
-<html>
 
-<head>
-	...
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head> 
+	<!-- This Project Compatible with all modern browsers and devices including mobile phone and tablets -->
 
-	@RenderSection("page_css", required:false)
+	<title>
+	Stylish Javascript Popup
+	</title>
+    
+	<script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+	<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="css/stylesheet.css" type="text/css"/>
+	<script src="js/script.js"></script>    
 </head>
 
 <body>
-	...
+	
+	<!--  Container Control for Primary Components -->
+	<div class ="maincontainer" id="_maincontainer">
+	</div>
 
-	@RenderSection("page_script", required: false)
+	<!--  Container Control for Popup -->
+	<div class ="popupncontainer" id="_popupcontainer">
+	</div>
+
 </body>
-
 </html>
 ```
 
-##### Creating Partial View of Navigation Bar
-Right click on the _**Views\Shared**_ select _**add / view**_ and create new partial view of Navigation Bar called _Navbar.cshtml.
-
-![Dg Viewnavbar](images/dg_viewnavbar.png)
-
-Open file _**Views\Shared\_Navbar.cshtml**_, paste the *&lt;nav&gt;* tag that copied from _Layout.cshtml.
-For our case, the navigation bar will not render unless the customer is signed in. However, for Home Page it will render navigation bar regardless of login status.
-The below code block shows how our _Navbar.cshtml look like.
-```HTML
-@using Microsoft.AspNetCore.Identity
-
-@inject SignInManager<ApplicationUser> SignInManager
-
-@if ((SignInManager.IsSignedIn(User)) || (ViewData["Title"].ToString() == "Home Page"))
-{
-	<nav class="navbar navbar-inverse navbar-fixed-top">	
-		...      
-		...
-	</nav>
-}
-```
-
-#### Customizing Login Page
-##### Removing Right Panel
-Open file _**Areas\Identity\Pages\Account\Login.cshtml.cshtml**_, remove the right panel div tag, 
-*&lt;div class="col-md-6 col-md-offset-2"&gt;* .
-```HTML
-<div class="col-md-6 col-md-offset-2">
-
-        ...
-
-</div>
-```
-##### Add page_css Section and Wrapper Div
-
-Add _**"@section page_css"**_ section before &lt;h2&gt; tag, as shown in the following code block. 
-This section will load customize css file named form_login.css for styling.
-
-```HTML
-@page
-@model LoginModel
-
-@{
-    ViewData["Title"] = "Log in";
-}
-
-@section page_css 
-{    
-    <link rel="stylesheet" href="~/css/form_login.css" type="text/css"  asp-append-version="true"/>    
-}
-
-<h2>@ViewData["Title"]</h2>
-<div class="row">
-	....   
-</div>
-
-...
-
-```
-
-Add wrapper div  _**&lt;div class="form_login"&gt;**_ which wrap &lt;h2&gt; tag and &lt;div class="row"&gt; tags.
-
-```HTML
-@page
-@model LoginModel
-
-@{
-    ViewData["Title"] = "Log in";
-}
-
-@section page_css 
-{    
-    <link rel="stylesheet" href="~/css/form_login.css" type="text/css"  asp-append-version="true"/>    
-}
-
-<div class="form_login">
-
-    <h2>@ViewData["Title"]</h2>
-
-    <div class="row">
-     ...        
-    </div>    
-
-</div>
-
-...
-```
-
-##### Creating CSS file
-Right click on the _**wwwroot\css**_ select _**add / new item**_ and add css file named form_login.css.
-Add CSS rules that override the existing bootstrap styles. use @media quries to ensure not compromise in responsive behaviour. 
-Align the Login dialog box in center of page and put box shadow for aesthetic purpose.
-
-```CSS
-.form_login {
-    padding: 15px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid #ddd;
-
-    -webkit-box-shadow: 0 0 5px #eee;
-    -moz-box-shadow: 0 0 5px #eee;
-    box-shadow: 0 0 5px #eee;
-}
-
-@media (min-width: 992px) {
-    .form_login {
-        padding: 15px;
-        width: 30%;
-    }
-}
-
-.form_login h2,
-.form_login .row {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.form_login .row .col-md-4 {
-    width: 100%;
-}
-```
-
-After adding CSS file, we have completed the customizing process of Login Page.
-
-
-#### Customizing Register Page
-Customizing Register page to multi-step page is relatively complicate as it require several major steps to accomplish.
-Firstly we need to amend RegisterModel to adapt with new columns that we added eariler. 
-After that we need to amend Razor Page to add UI Components and attributes to control validations and steps.
-Finally, we need to javascript with AngularJS and jQuery for controlling script and steps.
-
-##### Modifying RegisterModel class
-
-Add Enum called Gender at the top of the RegisterModel class. This enum will be use by Gender select tag as option values.
- 
-```C#
-public class RegisterModel : PageModel
-{
-	public enum Gender
-	{
-		Male = 1,
-		Female = 2
-	}
-
-	...
-
-	public class InputModel
-	{	
-		...
-	}
-}
-```
-
-
-Add properties of ApplicationUser model in the InputModel class. the property _**Step**_ is to control the registration 
-steps.
-
-```C#
- public class InputModel
-{
-    [Required]            
-    [Display(Name = "Step")]
-    public string Step { get; set; }
-
-    [Required]
-    [EmailAddress]
-    [Display(Name = "Email")]
-    public string Email { get; set; }
-
-    [Required]
-    [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-    [DataType(DataType.Password)]
-    [Display(Name = "Password")]
-    public string Password { get; set; }
-
-    [DataType(DataType.Password)]
-    [Display(Name = "Confirm password")]
-    [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-    public string ConfirmPassword { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "First Name")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage ="The {0} must between {1} to {2} characters.")]
-    public string FirstName { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "Last Name")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string LastName { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "Gender")]
-    public string Gender { get; set; }
-
-    [Required]
-    [Display(Name = "Date of Birth")]
-    [DataType(DataType.Date), DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-    public System.DateTime DateofBirth { get; set; }
-                        
-    [DataType(DataType.Text)]
-    [Display(Name = "Mobile Contact No.")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string MobileContact { get; set; }
-                        
-    [DataType(DataType.Text)]
-    [Display(Name = "Home Contact No.")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string HomeContact { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "Street Address")]            
-    public string StreetAddress { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "City")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string City { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "Postal Code")]
-    [StringLength(20, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string PostalCode { get; set; }
-                        
-    [DataType(DataType.Text)]
-    [Display(Name = "Province")]            
-    public string Province { get; set; }
-
-    [Required]
-    [DataType(DataType.Text)]
-    [Display(Name = "Country")]
-    [StringLength(50, MinimumLength = 3, ErrorMessage = "The {0} must between {1} to {2} characters.")]
-    public string Country { get; set; }            
-}
-```
-
-Add additional columns of ApplicationUser model in the _**OnPostAsync**_ function which responsible to update to the database.
-```C#
-public async Task<IActionResult> OnPostAsync(string returnUrl = null)
-{
-    returnUrl = returnUrl ?? Url.Content("~/");
-    if (ModelState.IsValid)
-    {        
-        var user = new ApplicationUser
-        {
-            UserName = Input.Email,
-            Email = Input.Email,
-            FirstName = Input.FirstName,
-            LastName = Input.LastName,
-            Gender = Input.Gender,
-            DateOfBirth = Input.DateofBirth,
-            MobileContact = Input.MobileContact,
-            HomeContact = Input.HomeContact,
-            StreetAddress = Input.StreetAddress,
-            City = Input.City,
-            PostalCode = Input.PostalCode,
-            Province = Input.Province,
-            Country = Input.Country,
-        };
-
-        var result = await _userManager.CreateAsync(user, Input.Password);
-        
-	...
-    }
-
-    ...
-}
-```
-
-##### Modifying RegisterModel class
-
-<u>**Add page_css Section and Wrapper Div**</u>
-
-Add _**"@section page_css"**_ section and _**"@section page_script"**_ before &lt;h2&gt; tag, as shown in the 
-following code block. These sections will load customize css file named form_register.css and 
-customized javascript file form_register.js respectively.
-
-```HTML
-@page
-@model RegisterModel
-@{
-    ViewData["Title"] = "Register";
-}
-
-@section page_css
-{
-    <link rel="stylesheet" href="~/css/form_register.css" type="text/css" asp-append-version="true" />
-}
-
-@section page_script
-{
-    <script src="~/js/form_register.js" asp-append-version="true"></script>
-}
-
-<h2>@ViewData["Title"]</h2>
-
-<div class="row">
-	...
-</div>
-...
-```
-
-Add wrapper div  _**&lt;div class="form_register" ng-app="registerApp" ng-controller="registerController"&gt;**_ which wrap &lt;h2&gt; tag and &lt;div class="row"&gt; tags. 
-This wrapper div will also use for as AngularJS module and controller.
-
-```HTML
-@page
-@model RegisterModel
-@{
-    ViewData["Title"] = "Register";
-}
-
-@section page_css
-{
-    <link rel="stylesheet" href="~/css/form_register.css" type="text/css" asp-append-version="true" />
-}
-
-@section page_script
-{
-    <script src="~/js/form_register.js" asp-append-version="true"></script>
-}
-
-<div class="form_register" ng-app="registerApp" ng-controller="registerController">
-
-    <h2>@ViewData["Title"]</h2>
-
-    <div class="row">
-
-        ...
-
-    </div>
-</div>
-
-...
-```
-
-<u>**Add Controls for the Additional Fields**</u>
-
-In the _**&lt;div class="row"&gt;**_ Tag, we will populate the input controls for new fields of ApplicationUser model. 
-
-```HTML
- <div class="row">
-        <div class="col-md-4">
-            <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                <h4>Create a new account.</h4>
-                <div class="stepinfo">{{ stepinfo }}</div> @* bind with $scope.stepinfo *@
-                <hr />
-                <div asp-validation-summary="All" class="text-danger"></div>
-
-                <div class="form-group" ng-hide="true"> @* always hide the step field, it just for control purpose*@
-                    <label asp-for="Input.Step"></label>
-                    <input asp-for="Input.Step" class="form-control" ng-model="step"/>
-                    <span asp-validation-for="Input.Step" class="text-danger"></span>
-                </div>
-
-                <div class="form-group" ng-show="step==1"> @* This field will visible when $scope.step = 1 *@
-                    <label asp-for="Input.FirstName"></label>
-                    <input asp-for="Input.FirstName" class="form-control" />
-                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==1"> @* This field will visible when $scope.step = 1 *@
-                    <label asp-for="Input.LastName"></label>
-                    <input asp-for="Input.LastName" class="form-control" />
-                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==1"> @* This field will visible when $scope.step = 1 *@
-                    <label asp-for="Input.Gender"></label>					   
-						@* Get opstions value from the Gender enum *@
-                    <select asp-for="Input.Gender" asp-items="Html.GetEnumSelectList<RegisterModel.Gender>()" class="form-control"></select> 
-                    <span asp-validation-for="Input.Gender" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==1"> @* This field will visible when $scope.step = 1 *@
-                    <label asp-for="Input.DateofBirth"></label>
-                    <input asp-for="Input.DateofBirth" class="form-control" />
-                    <span asp-validation-for="Input.DateofBirth" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==3"> @* This field will visible when $scope.step = 3 *@
-                    <label asp-for="Input.MobileContact"></label>
-                    <input asp-for="Input.MobileContact" class="form-control" />
-                    <span asp-validation-for="Input.MobileContact" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==3"> @* This field will visible when $scope.step = 3 *@
-                    <label asp-for="Input.HomeContact"></label>
-                    <input asp-for="Input.HomeContact" class="form-control" />
-                    <span asp-validation-for="Input.HomeContact" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==2"> @* This field will visible when $scope.step = 2 *@
-                    <label asp-for="Input.StreetAddress"></label>
-                    <input asp-for="Input.StreetAddress" class="form-control" />
-                    <span asp-validation-for="Input.StreetAddress" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==2"> @* This field will visible when $scope.step = 2 *@
-                    <label asp-for="Input.City"></label>
-                    <input asp-for="Input.City" class="form-control" />
-                    <span asp-validation-for="Input.City" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==2"> @* This field will visible when $scope.step = 2 *@
-                    <label asp-for="Input.PostalCode"></label>
-                    <input asp-for="Input.PostalCode" class="form-control" />
-                    <span asp-validation-for="Input.PostalCode" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==2"> @* This field will visible when $scope.step = 2 *@
-                    <label asp-for="Input.Province"></label>
-                    <input asp-for="Input.Province" class="form-control" />
-                    <span asp-validation-for="Input.Province" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==2"> @* This field will visible when $scope.step = 2 *@
-                    <label asp-for="Input.Country"></label>
-                    <input asp-for="Input.Country" class="form-control" />
-                    <span asp-validation-for="Input.Country" class="text-danger"></span>
-                </div>
-
-                <div class="form-group" ng-show="step==3"> @* This field will visible when $scope.step = 3 *@
-                    <label asp-for="Input.Email"></label>
-                    <input asp-for="Input.Email" class="form-control" />
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==3">@* This field will visible when $scope.step = 3 *@
-                    <label asp-for="Input.Password"></label>
-                    <input asp-for="Input.Password" class="form-control" />
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="form-group" ng-show="step==3"> @* This field will visible when $scope.step = 3 *@
-                    <label asp-for="Input.ConfirmPassword"></label>
-                    <input asp-for="Input.ConfirmPassword" class="form-control" />
-                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-                </div>
-					
-		@* Previous button will visible when $scope.step > 1 *@
-		<button type="button" class="btn _prevbtn" ng-show="step>1" ng-click="previousStep()">&ltPrevious</button>
-
-		@* Next button will visible when $scope.step < 3 (Maximum Step) *@
-		<button type="button" class="btn" ng-show="step<3" ng-click="nextStep()">Next&gt</button>
-
-		@* Register button will visible when $scope.step = 3 (Maximum Step) *@	
-		<button type="submit" class="btn btn-default" ng-show="step==3">Register</button>
-            </form>
-        </div>
-    </div>
-```
-
-
-##### Creating CSS file
-Right click on the _**wwwroot\css**_ select _**add / new item**_ and add css file named form_register.css.
-Add CSS rules that override the existing bootstrap styles. use @media quries to ensure not compromise in responsive behaviour. 
-Align the Login dialog box in center of page and put box shadow for aesthetic purpose.
-
-_**body:not([fa-initialized])**_ tag is to ensure page is not visible until angular.controller is fully initialized the controls.
-This is to avoid screen flickering while angular.controller is show or hide controls according to relevant Step No. .
-
-
-```CSS
-body:not([fa-initialized])
-{
-    display: none;
-}
-
-.form_register {
-    padding: 15px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid #ddd;
-
-    -webkit-box-shadow: 0 0 5px #eee;
-    -moz-box-shadow: 0 0 5px #eee;
-    box-shadow: 0 0 5px #eee;
-}
-
-@media (min-width: 992px) {
-    .form_register {
-        padding: 15px;
-        width: 30%;
-    }
-}
-
-.form_register h2,
-.form_register .row 
-{
-    width: 100%;
-    margin-left:auto;
-    margin-right:auto;
-}
-
-.form_register .row .col-md-4 
-{
-    width: 100%;
-}
-
-.form_register .btn
-{
-    width : 100px;
-    float : right;
-}
-
-.form_register ._prevbtn
-{
-    float : left;
-}
-```
-
-##### Creating Javascript file
-Right click on the _**wwwroot\js**_ select _**add / new item**_ and add javascript file named form_register.js.
-
-The following javascript code will add _**fa-initialized**_ attribute to body and this will display the page.
-
-`registerForm.closest('body').attr('fa-initialized', 'true');` {:.language-javascript} 
-
-
-
-The following javascript code will ensure to get correct step if server validation is fail and page is refreshed.
-
-`if ((!isNaN(stepInput.val())) && (Number(stepInput.val()) > 0)) $scope.step = Number(stepInput.val());    
-else $scope.step = 1;`{:.language-javascript}
-
-The full javascript for controlling multi-step registration process.
+#### Creating the Javascript File
+Create the _**script.js**_ file in the _**js**_ folder. Javascript file will have three primary portions.
+The first portion contains, React objects to create necessary DOM elements. Second portion is the initialziation part and 
+this will execute on on $(document).ready. This initialization part will render all react DOM objects and Initialization of 
+the class. The final portion contains singleton class named AppManager which is the core part of this project and that handle 
+all necessary actions and events.
+
+##### First Portion
 
 ```JAVASCRIPT
-var registerApp = angular.module('registerApp', []);
+var lcListBox = React.createElement("ul", { className : "listbox" },
+						React.createElement('li', { id: '_item1', 'ea-command': '@cmd%itemclick' }, 'Item 1'),
+						React.createElement('li', { id: '_item2', 'ea-command': '@cmd%itemclick' }, 'Item 2'),
+						React.createElement('li', { id: '_item3', 'ea-command': '@cmd%itemclick' }, 'Item 3'),
+						React.createElement('li', { id: '_item4', 'ea-command': '@cmd%itemclick' }, 'Item 4'),
+						React.createElement('li', { id: '_item5', 'ea-command': '@cmd%itemclick' }, 'Item 5'));
 
-registerApp.config(function ($compileProvider) {
-    $compileProvider.preAssignBindingsEnabled(true)
-});
+var lcPopUpTitle        = React.createElement("div", { className: 'title' },
+						  React.createElement('div', { id       : '_titletext' }, 'Message'),
+						  React.createElement('div', { className: 'closebuttondiv' },
+								React.createElement('a', { id: '_closebutton', 'ea-command': '@cmd%cancelpopup' }, '\uf00d')));
+var lcPopUpContent      = React.createElement("div", { className: "content", 'fa-messagetemplate': 'You choose "$ITEM".' }, 'You choose Item 1');
+var lcPopUpButton       = React.createElement("div", { className: "buttondiv" },
+								React.createElement("a", { id: '_okbutton', 'ea-command': '@cmd%closepopup' }, 'OK'));
 
-registerApp.controller('registerController', function ($scope) {
-    var stepTemplate    = 'Step $STEP of 3';
-    var maxStep         = 3;
-    var registerForm    = $('div .form_register form');
-    var stepInput       = $('div.form-group input[name="Input.Step"]');
+var lcPopUpbox          = React.createElement("div", { className: 'popupbox' }, lcPopUpTitle, lcPopUpContent, lcPopUpButton);
 
-    // Initialize the step.
-    if ((!isNaN(stepInput.val())) && (Number(stepInput.val()) > 0)) $scope.step = Number(stepInput.val());
-    else $scope.step = 1;
-
-    // Prvent screen flickering.
-    registerForm.closest('body').attr('fa-initialized', 'true');
-
-    $scope.stepinfo = "";
-
-    $scope.refreshValue = function () {
-        $scope.stepinfo = stepTemplate.replace('$STEP', $scope.step);
-    };
-
-    $scope.nextStep = function () {        
-        
-        if (($scope.step < maxStep) && ($scope.validateStep()))
-        {
-            $scope.step = $scope.step + 1;
-            $scope.refreshValue();
-        }
-    }
-
-    $scope.previousStep = function () {
-        if ($scope.step > 1) {
-            $scope.step = $scope.step - 1;
-            $scope.refreshValue();
-        }
-    }
-
-    $scope.validateStep = function () {
-        
-        var elementList = registerForm.find('div.form-group[ng-show="step==' + $scope.step + '"] input[name]');
-        var validator = registerForm.validate();
-        var success = true;
-
-	// Validate each elements belong to particular step.
-        elementList.each(function () {
-            if (!validator.element('div.form-group input[name="' + $(this).attr('name') + '"]'))
-            {
-                success = false;
-                return (false);
-            }
-        });
-
-        return (success);
-    }
-
-    $scope.refreshValue();    
-});
+var lcPopUpOverlay = React.createElement("div", { className: 'popupoverlay' }, lcPopUpbox);
 ```
 
-After javascript file is created, the customization process is successfully done.
+_**lcListBox**_ object is the DOM element for the list box that shows on primary screen, and all the _**lcPopupxxx**_ objects are parts of 
+popup box.
 
+##### Second Portion
+
+```JAVASCRIPT
+$(document).ready(function () {
+	ReactDOM.render(lcListBox, document.getElementById('_maincontainer'));
+	ReactDOM.render(lcPopUpOverlay, document.getElementById('_popupcontainer'));            
+	AppManager.Init();
+});
+```
+At `$(document).ready()`{:.language-javascript} event, I render _**lcListBox**_ React object in the _**_maincontainer**_.
+After that, _**lcPopUpOverlay**_ which is the root element of Popup DOM element in the _**_popupcontainer**_.
+
+##### Third Portion
+
+```JAVASCRIPT
+var AppManager = (function () {
+var clDeferred;
+var clListBox;
+var clPopUpOverlay;
+var clPopUpContent;
+
+return {
+	Init: function () 
+	{
+		clListBox           = $(document).find('ul.listbox');                            
+		clPopUpOverlay      = $(document).find('div.popupoverlay');
+		clPopUpContent      = clPopUpOverlay.find('div.content');
+
+		$(document).find('[ea-command]').unbind('click');
+		$(document).find('[ea-command]').click(AppManager.HandlerOnClick);                            
+	},
+
+	ShowPopup : function(paItemName)
+	{
+		clDeferred = $.Deferred();
+
+		if (clPopUpOverlay && clPopUpContent)
+		{                                
+			var lcTextTemplate = clPopUpContent.attr('fa-messagetemplate');
+			lcTextTemplate = lcTextTemplate.replace('$ITEM', paItemName);
+
+			clPopUpContent.text(lcTextTemplate || '');
+			clPopUpOverlay.attr('fa-show', 'true');
+		}
+
+		return (clDeferred);
+	},
+	ClosePopUp : function()
+	{
+		clPopUpOverlay.removeAttr('fa-show');
+	},
+	SetActiveItem : function(paElement)
+	{
+		if (paElement)
+		{                                
+			AppManager.ShowPopup(paElement.text()).done(function(paResult)
+			{
+				if (paResult == 'ok') {
+					clListBox.find('li').removeAttr('fa-active');
+					paElement.attr('fa-active', 'true');
+				}
+			});
+		}
+	},
+	HandlerOnClick : function(paEvent)
+	{
+		paEvent.preventDefault();
+
+		var lcCommand = $(this).attr('ea-command');
+		lcCommand = lcCommand.substring(lcCommand.indexOf('%') + 1);
+
+		switch(lcCommand)
+		{
+			case 'itemclick':
+				{
+					AppManager.SetActiveItem($(this));
+					break;
+				}
+
+			case 'closepopup':
+				{
+					AppManager.ClosePopUp();
+					if (clDeferred) clDeferred.resolve('ok');
+				}
+
+			case 'cancelpopup':
+				{                                        
+					AppManager.ClosePopUp();
+					if (clDeferred) clDeferred.resolve('cancel');
+				}
+		}
+					
+	}
+}
+})();
+```
+
+<u> _**Init**_ function</u>
+
+_**Init**_ function Initalize the class variables clListBox, clPopUpOverlay and clPopUpContent variables 
+and bind the click event of elements that has _**ea-command**_ attribute with _**HandlerOnClick**_ event handler.
+To avoid multiple binding, it will unbind the previous bindings and bind again.
+
+<u> _**ShowPopup**_ function</u>
+
+This function is responsible to show the stylish popup with the given parameter _**paItemName**_. 
+In order to get back the user's response it implement asynchronous behaviour using jQuery Deferred.
+This function set the attribute _**fa-show**_  of _**clPopUpOverlay**_ DOM element, and 
+it will trigger CSS rule to show the popup with transition.
+
+<u> _**ClosePopup**_ function</u>
+
+This function will close the popup by removing attribute _**fa-show**_ of _**clPopUpOverlay**_ DOM element which
+trigger CSS rule to hide the popup.
+
+
+<u> _**SetActiveItem**_ function</u>
+
+This function will show the popup by calling  _**ShowPopup**_ function and if user press _**OK**_ then
+it will mark the item belong to _**paElement**_ paramters as Active, otherwise it will do nothing.
+
+<u> _**HandlerOnClick**_ function</u>
+
+This is an event handler that handle all the click events of all elements that has _**ea-command**_ attribute.
+The command format is _**@cmd%yyyyy**_  and it parse the command format by eliminating prefix and get only _**yyyyy**_ .
+After that, the command will pass to switch block for execution.
+
+
+#### Creating the CSS File
+Create the _**stylesheet.css**_ file in the _**css**_ folder.
+
+The following _**css**_ rules is to load fontawesome file, if necessary. if the font is not installed, it will download from cdn. 
+This is to avoid missing font issue, if font is not installed on device.
+
+```CSS
+@font-face
+{ 
+	font-family: 'fontawesome'; 
+
+	src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.eot'); 
+	src: local('fontawesome'),
+		 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.eot?#iefix') format('embedded-opentype'), 
+		 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.svg#fontawesome') format('svg'), 
+		 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.ttf') format('truetype'), 
+		 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff') format('woff'), 
+		 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2') format('woff2'); 
+
+	font-weight: normal; 
+	font-style: normal; 
+}
+```
+The following _**css**_ rule is for body tag. Nothing special, just make body tag to cover the whole area.
+```CSS
+body
+{
+	position    : relative;
+	width       : 100%;
+	height      : 100%;
+	margin      : 0;        
+	font-family : helvetica;        
+}
+```
+
+The following _**css**_ rules is for _**maincontainer**_. To ensure to cover whole area of device, it uses _**100vw**_ 
+and _**100vh**_ for width and height. After that add multiple _**css**_ rules to make gradient grey background color
+with cross browser compatibility.
+
+```CSS
+.maincontainer 
+{
+	position    : relative;
+	display     : block;                
+	width       : 100vw;
+	height      : 100vh;
+
+	background  : rgba(207,207,207,1);
+	background  : -moz-linear-gradient(-45deg, rgba(207,207,207,1) 0%, rgba(237,237,237,1) 21%, rgba(224,224,224,1) 39%, rgba(235,235,235,1) 61%, rgba(214,214,214,1) 80%, rgba(237,237,237,1) 100%);
+	background  : -webkit-gradient(left top, right bottom, color-stop(0%, rgba(207,207,207,1)), color-stop(21%, rgba(237,237,237,1)), color-stop(39%, rgba(224,224,224,1)), color-stop(61%, rgba(235,235,235,1)), color-stop(80%, rgba(214,214,214,1)), color-stop(100%, rgba(237,237,237,1)));
+	background  : -webkit-linear-gradient(-45deg, rgba(207,207,207,1) 0%, rgba(237,237,237,1) 21%, rgba(224,224,224,1) 39%, rgba(235,235,235,1) 61%, rgba(214,214,214,1) 80%, rgba(237,237,237,1) 100%);
+	background  : -o-linear-gradient(-45deg, rgba(207,207,207,1) 0%, rgba(237,237,237,1) 21%, rgba(224,224,224,1) 39%, rgba(235,235,235,1) 61%, rgba(214,214,214,1) 80%, rgba(237,237,237,1) 100%);
+	background  : -ms-linear-gradient(-45deg, rgba(207,207,207,1) 0%, rgba(237,237,237,1) 21%, rgba(224,224,224,1) 39%, rgba(235,235,235,1) 61%, rgba(214,214,214,1) 80%, rgba(237,237,237,1) 100%);
+	background  : linear-gradient(135deg, rgba(207,207,207,1) 0%, rgba(237,237,237,1) 21%, rgba(224,224,224,1) 39%, rgba(235,235,235,1) 61%, rgba(214,214,214,1) 80%, rgba(237,237,237,1) 100%);
+	filter      : progid:DXImageTransform.Microsoft.gradient( startColorstr='#cfcfcf', endColorstr='#ededed', GradientType=1 );
+}
+```
+The following _**css**_ rules is for list box that display items.I only use _**vw**_ and _**vh**_ units to ensure 
+compatibility across all size of devices. Set _**transform**_ rule, to make list box to stay center of the screen of 
+any size. I also use gradient background for aesthetic purpose.
+
+```CSS
+.maincontainer .listbox 
+{
+	position            : absolute;
+	display             : block;
+	
+	width               : 60vw;
+	height              : 30.5vh;
+
+	margin              : auto;
+	padding             : 0;
+	padding-inline-start: 0;
+
+	border-top          : 0.5vh solid #888;
+	border-left         : 0.5vh solid #888;
+	border-bottom       : 0.5vh solid #eee;            
+	border-right        : 0.5vh solid #eee;   
+
+	-moz-box-shadow     : 1vh 1vh 2vh #888;     
+	-webkit-box-shadow  : 1vh 1vh 2vh #888;     
+	box-shadow          : 1vh 1vh 2vh #888;     
+					
+	top                 : 50%;
+	left                : 50%;
+
+	transform           : translateY(-50%) translateX(-50%);
+	-ms-transform       : translateY(-50%) translateX(-50%);
+	-moz-transform      : translateY(-50%) translateX(-50%);
+	-webkit-transform   : translateY(-50%) translateX(-50%);
+	-o-transform        : translateY(-50%) translateX(-50%);
+
+	background: rgba(45,134,156,0.52);
+	background: -moz-linear-gradient(45deg, rgba(45,134,156,0.52) 0%, rgba(96,202,232,0.52) 25%, rgba(71,177,204,0.51) 50%, rgba(96,202,232,0.5) 76%, rgba(73,165,191,0.5) 100%);
+	background: -webkit-gradient(left bottom, right top, color-stop(0%, rgba(45,134,156,0.52)), color-stop(25%, rgba(96,202,232,0.52)), color-stop(50%, rgba(71,177,204,0.51)), color-stop(76%, rgba(96,202,232,0.5)), color-stop(100%, rgba(73,165,191,0.5)));
+	background: -webkit-linear-gradient(45deg, rgba(45,134,156,0.52) 0%, rgba(96,202,232,0.52) 25%, rgba(71,177,204,0.51) 50%, rgba(96,202,232,0.5) 76%, rgba(73,165,191,0.5) 100%);
+	background: -o-linear-gradient(45deg, rgba(45,134,156,0.52) 0%, rgba(96,202,232,0.52) 25%, rgba(71,177,204,0.51) 50%, rgba(96,202,232,0.5) 76%, rgba(73,165,191,0.5) 100%);
+	background: -ms-linear-gradient(45deg, rgba(45,134,156,0.52) 0%, rgba(96,202,232,0.52) 25%, rgba(71,177,204,0.51) 50%, rgba(96,202,232,0.5) 76%, rgba(73,165,191,0.5) 100%);
+	background: linear-gradient(45deg, rgba(45,134,156,0.52) 0%, rgba(96,202,232,0.52) 25%, rgba(71,177,204,0.51) 50%, rgba(96,202,232,0.5) 76%, rgba(73,165,191,0.5) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2d869c', endColorstr='#49a5bf', GradientType=1 );
+}  
+```
+
+
+The following _**css**_ rules is for list items. To ensure list items are fully occupied list box with equal height I use
+`height : calc((100% - 2.5vh) / 5)`{:.language-css}. In calc formula _**2.5vh**_ is height occupied for margin purpose and 
+_**5**_ is the number of items. To put extra top and bottom margin for first and last item, 
+I use _**:first-child**_ and _**:last-child**_ selectors. To show right caret on the left side of active item, 
+I use _**::before**_ pseudo element when _**fa-active**_ attribute is set, 
+`.maincontainer .listbox li[fa-active]::before`{:.language-css}. 
+I also set font size in _**vh**_ unit to ensure font size is fit for all devices.
+
+
+```CSS
+.maincontainer .listbox li
+{
+	position        : relative;
+	cursor          : pointer;
+	display         : block;
+	text-align      : center;
+	font-size       : 3.5vh;
+	width           : 100%;
+	height          : calc((100% - 2.5vh) / 5);
+	border-bottom   : 0.1vh solid #eee; 
+	line-height     : 170%;
+}
+
+.maincontainer .listbox li:first-child
+{
+	margin-top      : 1vh;
+}
+
+.maincontainer .listbox li:last-child
+{
+	margin-bottom   : 1vh;
+	border-bottom   : none;
+}
+
+.maincontainer .listbox li:hover
+{
+	background  : #faffd1;
+	color       : #f00;
+}
+
+.maincontainer .listbox li[fa-active]
+{
+	font-weight : bold;
+}
+
+.maincontainer .listbox li[fa-active]::before
+{
+	position    : absolute;
+	left        : 2vw;
+	top         : 0.9vh;
+	font        : 4vh fontawesome;
+	content     : '\f0da';
+}
+
+```
+
+Although _**vw**_ and _**vh**_ are suitable for tablet, mobile phones and other small devices, 
+it is not suitable for PCs or similar large devices. 
+So I use @media queries to enforce to use _**px**_ unit and _**pt**_ unit instead of _**vw**_ and _**vh**_ units on large devices.
+
+```CSS
+@media screen and (min-device-width : 768px) 
+{
+	.maincontainer .listbox 
+	{
+		width               : 300px;
+		height              : 200px;     
+		border-top          : 3px solid #888;
+		border-left         : 3px solid #888;
+		border-bottom       : 3px solid #eee;            
+		border-right        : 3px solid #eee;     
+		
+		-moz-box-shadow     : 5px 5px 10px #888;     
+		-webkit-box-shadow  : 5px 5px 10px #888;     
+		box-shadow          : 5px 5px 10px #888;     
+	}
+	
+	.maincontainer .listbox li
+	{   
+		font-size       : 16pt;                             
+		line-height     : 150%;                                                
+		height          : calc((100% - 20px) / 5);
+		border-bottom   : 1px solid #eee;
+	}
+
+   .maincontainer .listbox li:first-child
+   {
+		margin-top      : 10px;
+   }
+
+   .maincontainer .listbox li:last-child
+   {
+		margin-bottom   : 10px;
+		border-bottom   : none;
+   }   
+   
+   .maincontainer .listbox li[fa-active]:before
+	{                    
+		left        : 10px;
+		top         : 5px;
+		font        : 16pt fontawesome;                 
+	}             
+}
+
+```
+
+The following _**css**_ classes is for _**popupoverlay**_ and it responsible to show and hide the popup.
+`position : fixed`{:.language-css} is to position the element relative to viewport.
+`left : 100vw`{:.language-css} is to hide popup overlay on the right. The _**css**_ rule transition makes
+overlay to appear with sliding animation 0.5s. `.popupoverlay[fa-show]`{:.language-css} rule is to 
+show popup when _**fa-show**_ attribute is set.
+
+```CSS
+.popupoverlay
+{
+	position            : fixed;
+	top                 : 0vh;
+	left                : 100vw;
+	width               : 100%;
+	height              : 100%;
+	background          : rgba(0,0,0,0.5);
+	opacity             : 0;
+
+	-webkit-transition  : left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+	-moz-transition     : left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+	-o-transition       : left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+	-ms-transition      : left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+	transition          : left 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.popupoverlay[fa-show]
+{
+	left                : 0vw;
+	opacity             : 1;
+}
+
+```
+
+The following _**css**_ classes is for _**popupbox**_ and it's child elements for tablet, mobile phone 
+and other small devices.
+
+```CSS
+.popupoverlay .popupbox
+{
+	position            : relative;
+	display             : block;                
+
+	width               : 80vw;
+	height              : 25vh;
+
+	background          : #eee;
+
+	top                 : 50%;
+	left                : 50%;
+
+	transform           : translateY(-50%) translateX(-50%);
+	-ms-transform       : translateY(-50%) translateX(-50%);
+	-moz-transform      : translateY(-50%) translateX(-50%);
+	-webkit-transform   : translateY(-50%) translateX(-50%);
+	-o-transform        : translateY(-50%) translateX(-50%);
+
+	-moz-box-shadow     : 0vh 0vh 2vh #fff;     
+	-webkit-box-shadow  : 0vh 0vh 2vh #fff;     
+	box-shadow          : 0vh 0vh 2vh #fff;     
+}
+
+.popupoverlay .popupbox .title
+{
+	width               : 100%;
+	height              : 6vh;
+
+	background          : #0973a7;
+	color               : #ddd;
+	
+	font-size           : 2.5vh;
+	font-weight         : bold;
+	text-align          : center;  
+	line-height         : 200%;  
+}
+
+.popupoverlay .popupbox .closebuttondiv
+{
+	position            : absolute;
+
+	width               : auto;
+	height              : 6vh;
+
+	top                 : 0;
+	right               : 20px;
+	padding-top         : 0.5vh;
+
+	-webkit-box-sizing  : border-box;
+	-moz-box-sizing     : border-box;
+	-ms-box-sizing      : border-box;
+	-o-box-sizing       : border-box;
+	box-sizing          : border-box;
+}
+
+.popupoverlay .popupbox .closebuttondiv a
+{
+	-moz-box-shadow     : inset 0 0.3vh 0 0 #f5978e;
+	-webkit-box-shadow  : inset 0 0.3vh 0 0 #f5978e;
+	box-shadow          : inset 0 0.3vh 0 0 #f5978e;
+
+	background-color    : #f24537;
+	background          : -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f24537), color-stop(1, #c62d1f));
+	background          : -moz-linear-gradient(top, #f24537 5%, #c62d1f 100%);
+	background          : -webkit-linear-gradient(top, #f24537 5%, #c62d1f 100%);
+	background          : -o-linear-gradient(top, #f24537 5%, #c62d1f 100%);
+	background          : -ms-linear-gradient(top, #f24537 5%, #c62d1f 100%);
+	background          : linear-gradient(to bottom, #f24537 5%, #c62d1f 100%);
+	filter              : progid:DXImageTransform.Microsoft.gradient(startColorstr='#f24537', endColorstr='#c62d1f',GradientType=0);
+			
+	-webkit-border-radius   : 50%;
+	-moz-border-radius      : 50%;
+	-ms-border-radius       : 50%;
+	-o-border-radius        : 50%;
+	border-radius           : 50%;
+
+	border                  : 0.1vh solid #d02718;
+	display                 : inline-block;
+	cursor                  : pointer;
+	color                   : #ffffff;	
+	font                    : 3vh "FontAwesome";		            
+	padding                 : 0;
+	text-decoration         : none;
+	text-shadow             : 0 0.6vw 0 #810e05;
+	line-height             : 150%;
+	width                   : 5vh;
+	height                  : 5vh;
+
+	-webkit-box-sizing      : border-box;
+	-moz-box-sizing         : border-box;
+	-ms-box-sizing          : border-box;
+	-o-box-sizing           : border-box;
+	box-sizing              : border-box;
+
+	-webkit-touch-callout   : none;
+	-webkit-user-select     : none;
+	-khtml-user-select      : none;
+	-moz-user-select        : none;
+	-ms-user-select         : none;
+	user-select             : none;        
+}
+
+.popupoverlay .popupbox .closebuttondiv a:active
+{
+	position                : relative;
+	top                     : 0.2vh;
+}
+
+.popupoverlay .popupbox .content
+{
+	width                   : 95%;
+	height                  : 8vh;
+	margin                  : 2vh auto 2vh auto;                                
+
+	text-align              : center;
+	font-size               : 3vh;
+	padding-top             : 2vh;
+
+	-webkit-box-sizing      : border-box;
+	-moz-box-sizing         : border-box;
+	-ms-box-sizing          : border-box;
+	-o-box-sizing           : border-box;
+	box-sizing              : border-box;
+
+	color                   : #555;
+}
+
+.popupoverlay .popupbox .buttondiv
+{
+	width                   : 100%;
+	height                  : auto;                
+	text-align              : center;
+}
+
+.popupoverlay .popupbox .buttondiv a
+{    
+	-moz-box-shadow         : inset 0 0.3vh 0 0 #a4e271;
+	-webkit-box-shadow      : inset 0 0.3vh 0 0 #a4e271;
+	box-shadow              : inset 0 0.3vh 0 0 #a4e271;
+	
+	background-color        : #89c403;
+	background              : -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #89c403), color-stop(1, #77a809));
+	background              : -moz-linear-gradient(top, #89c403 5%, #77a809 100%);
+	background              : -webkit-linear-gradient(top, #89c403 5%, #77a809 100%);
+	background              : -o-linear-gradient(top, #89c403 5%, #77a809 100%);
+	background              : -ms-linear-gradient(top, #89c403 5%, #77a809 100%);
+	background              : linear-gradient(to bottom, #89c403 5%, #77a809 100%);
+	filter                  : progid:DXImageTransform.Microsoft.gradient(startColorstr='#89c403', endColorstr='#77a809',GradientType=0);
+		
+	-webkit-border-radius   : 5%;
+	-moz-border-radius      : 5%;
+	-ms-border-radius       : 5%;
+	-o-border-radius        : 5%;
+	border-radius           : 5%;
+
+	border                  : 0.1vh solid #74b807;
+	display                 : inline-block;
+	cursor                  : pointer;
+	color                   : #ffffff;	
+	font-size               : 2.5vh;
+	font-weight             : bold;
+	padding                 : 1vh 4vw;
+	text-decoration         : none;
+	text-shadow             : 0 0.3vh 0 #528009;                
+	min-width               :23vw;
+	min-height              :3vh;
+
+	-webkit-touch-callout   : none;
+	-webkit-user-select     : none;
+	-khtml-user-select      : none;
+	-moz-user-select        : none;
+	-ms-user-select         : none;
+	user-select             : none;        
+}
+
+.popupoverlay .popupbox .buttondiv a:hover 
+{
+	background              : -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #77a809), color-stop(1, #89c403));
+	background              : -moz-linear-gradient(top, #77a809 5%, #89c403 100%);
+	background              : -webkit-linear-gradient(top, #77a809 5%, #89c403 100%);
+	background              : -o-linear-gradient(top, #77a809 5%, #89c403 100%);
+	background              : -ms-linear-gradient(top, #77a809 5%, #89c403 100%);
+	background              : linear-gradient(to bottom, #77a809 5%, #89c403 100%);
+	filter                  : progid:DXImageTransform.Microsoft.gradient(startColorstr='#77a809', endColorstr='#89c403',GradientType=0);
+	background-color        : #77a809;
+}
+
+.popupoverlay .popupbox .buttondiv a:active 
+{
+	position        : relative;
+	top             : 0.2vh;
+}
+```
+
+Again, as _**vw**_ and _**vh**_ units are not suitable for large devices, I need to use media queries to
+set _**px**_ unit.
+
+```CSS
+@media screen and (min-device-width : 768px) 
+{
+	.popupoverlay .popupbox
+	{
+		width       : 350px;
+		height      : 180px;
+	}
+
+	.popupoverlay .popupbox .title
+	{
+		height      : 35px;
+		font-size   : 12pt;
+	}
+
+	.popupoverlay .popupbox .closebuttondiv
+	{
+		height          : 30px;
+		right           : 5px;
+		padding-top     : 2px;
+	}
+
+	.popupoverlay .popupbox .closebuttondiv a
+	{
+	   width                : 28px;
+	   height               : 28px;
+	   font                 : 14pt "FontAwesome";	
+	   line-height          : 125%;
+	   
+	   -moz-box-shadow      : inset 0 2px 0 0 #f5978e;
+		-webkit-box-shadow  : inset 0 2px 0 0 #f5978e;
+		box-shadow          : inset 0 2px 0 0 #f5978e;
+
+		text-shadow         : 0 4px 0 #810e05;
+	}
+
+	.popupoverlay .popupbox .content
+	{
+		height              : 80px;
+		margin              : 10px auto 10px auto;
+		padding-top         : 30px;
+		font-size           : 14pt;
+	}
+
+	.popupoverlay .popupbox .buttondiv a
+	{
+		-moz-box-shadow     : inset 0 2px 0 0 #a4e271;
+		-webkit-box-shadow  : inset 0 2px 0 0 #a4e271;
+		box-shadow          : inset 0 2px 0 0 #a4e271;
+
+		min-width           : 50px;
+		min-height          : 20px;
+
+		
+		padding             : 5px 20px;
+
+		font-size           : 12pt;
+		line-height         : 150%;
+	}
+}
+```
+
+
+After completing of CSS file, everything is done and stylelish javascript popup is ready to use.
+
+---------------------------
 
 Kyi Phyo Cho@Albert Cho
