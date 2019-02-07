@@ -319,11 +319,11 @@ any size. I also use gradient background for aesthetic purpose.
 
 
 The following _**css**_ rules is for list items. To ensure list items are fully occupied list box with equal height I use
-`height : calc((100% - 2.5vh) / 5)`{:.language-css}. In calc formula _**2.5vh**_ is height occupied for margin purpose and 
+`height : calc((100% - 2.5vh) / 5)`. In calc formula _**2.5vh**_ is height occupied for margin purpose and 
 _**5**_ is the number of items. To put extra top and bottom margin for first and last item, 
 I use _**:first-child**_ and _**:last-child**_ selectors. To show right caret on the left side of active item, 
 I use _**::before**_ pseudo element when _**fa-active**_ attribute is set, 
-`.maincontainer .listbox li[fa-active]::before`{:.language-css}. 
+`.maincontainer .listbox li[fa-active]::before`. 
 I also set font size in _**vh**_ unit to ensure font size is fit for all devices.
 
 
@@ -425,9 +425,9 @@ So I use @media queries to enforce to use _**px**_ unit and _**pt**_ unit instea
 ```
 
 The following _**css**_ classes is for _**popupoverlay**_ and it responsible to show and hide the popup.
-`position : fixed`{.language-css} is to position the element relative to viewport.
-`left : 100vw`{.language-css} is to hide popup overlay on the right. The _**css**_ rule transition makes
-overlay to appear with sliding animation 0.5s. `.popupoverlay[fa-show]`{.language-css} rule is to 
+`position : fixed` is to position the element relative to viewport.
+`left : 100vw` is to hide popup overlay on the right. The _**css**_ rule transition makes
+overlay to appear with sliding animation 0.5s. `.popupoverlay[fa-show]` rule is to 
 show popup when _**fa-show**_ attribute is set.
 
 ```CSS
